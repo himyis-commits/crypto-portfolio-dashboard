@@ -142,6 +142,14 @@ export function Dashboard() {
     }
     return map;
   }, [history, total, walletValueMap]);
+  const fxHint = React.useMemo(() => {
+    if (currency === "usd") return null;
+    // CoinGecko quote feed includes USDC/Tether in selected currency.
+    // Since they are ~1 USD, this acts as a lightweight FX indicator.
+    const fx = prices["usd-coin"] ?? prices.tether ?? 0;
+    if (!Number.isFinite(fx) || fx <= 0) return null;
+    return `1 USD ≈ ${fx.toFixed(2)} ${currency.toUpperCase()}`;
+  }, [prices, currency]);
 
   return (
     <div className="grid gap-7">
@@ -187,6 +195,7 @@ export function Dashboard() {
                   <div className="mt-1 text-xs text-muted-foreground">
                     {wallets.length} wallets • {tokenList.length} tokens tracked
                   </div>
+                  {fxHint ? <div className="mt-0.5 text-[10px] text-muted-foreground/75">{fxHint}</div> : null}
                 </div>
                 <div className="hidden md:block rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-right">
                   <div className="text-[11px] text-muted-foreground">24h trend</div>

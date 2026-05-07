@@ -9,11 +9,13 @@ export function formatMoney(
   const locale =
     currency === "inr" ? "en-IN" : currency === "cad" ? "en-CA" : "en-US";
   const code = currency.toUpperCase();
-  return new Intl.NumberFormat(locale, {
+  const out = new Intl.NumberFormat(locale, {
     style: "currency",
     currency: code,
     maximumFractionDigits
   }).format(amount);
+  if (currency === "cad") return out.replace("$", "CA$");
+  return out;
 }
 
 export function formatCompact(amount: number) {

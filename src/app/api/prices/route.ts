@@ -12,6 +12,17 @@ const QuerySchema = z.object({
 });
 
 type CoinGeckoSimplePrice = Record<string, Record<string, number>>;
+type FxApiRes = { rates?: Record<string, number> };
+
+async function fetchCoinGeckoPrices(ids: string[], quote: SupportedCurrency) {
+  const cg = new URL("https://api.coingecko.com/api/v3/simple/price");
+  cg.searchParams.set("ids", ids.join(","));
+  cg.searchParams.set("vs_currencies", quote);
+  cg.searchParams.set("include_24hr_change", "true");
+  return await fetchJson<CoinGeckoSimplePrice>(cg.toString(), {
+    next: { revalidate: 30 }
+  } as RequestInit).catch(() => null);
+}
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -26,19 +37,24 @@ export async function GET(req: Request) {
   const ids = parsed.data.ids;
   if (ids.length === 0) return NextResponse.json({ currency, prices: {} }, { status: 200 });
 
-  const cg = new URL("https://api.coingecko.com/api/v3/simple/price");
-  cg.searchParams.set("ids", ids.join(","));
-  cg.searchParams.set("vs_currencies", currency);
-  cg.searchParams.set("include_24hr_change", "true");
-
-  const data = await fetchJson<CoinGeckoSimplePrice>(cg.toString(), {
-    // Cache at the edge for 30s: used by portfolio refresh.
-    // Note: route handler caching uses Next fetch caching semantics.
-    next: { revalidate: 30 }
-  } as RequestInit).catch(() => null);
+  const data = await fetchCoinGeckoPrices(ids, currency);
 
   if (!data) {
-    // Soft fallback: price = 0 (UI still works and shows data, just no valuation).
+    // Fallback for non-USD quotes:
+    // fetch USD prices and convert using a public FX feed.
+    if (currency !== "usd") {
+      const usdData = await fetchCoinGeckoPrices(ids, "usd");
+      const fx = await fetchJson<FxApiRes>("https://open.er-api.com/v6/latest/USD", {
+        next: { revalidate: 300 }
+      } as RequestInit).catch(() => null);
+      const rate = fx?.rates?.[currency.toUpperCase()] ?? 0;
+      if (usdData && rate > 0) {
+        const converted: Record<string, number> = {};
+        for (const id of ids) converted[id] = (usdData[id]?.usd ?? 0) * rate;
+        return NextResponse.json({ currency, prices: converted, fxFallback: true }, { status: 200 });
+      }
+    }
+
     const prices: Record<string, number> = Object.fromEntries(ids.map((id) => [id, 0]));
     return NextResponse.json({ currency, prices, isMock: true }, { status: 200 });
   }
