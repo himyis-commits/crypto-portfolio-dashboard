@@ -27,6 +27,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     const sb = supabase;
     const init = async () => {
+      const search = typeof window !== "undefined" ? window.location.search : "";
+      if (search.includes("code=")) {
+        const code = new URLSearchParams(search).get("code");
+        if (code) {
+          await sb.auth.exchangeCodeForSession(code).catch(() => null);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+
       // Fallback for OAuth implicit flow where tokens come back in hash.
       // Some environments fail to auto-persist this on first load.
       const hash = typeof window !== "undefined" ? window.location.hash : "";
@@ -65,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           options: {
             emailRedirectTo:
               typeof window !== "undefined"
-                ? `${window.location.origin}`
+                ? `${window.location.origin}/auth/callback`
                 : undefined
           }
         });
@@ -76,7 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error } = await supabase.auth.signInWithOAuth({
           provider: "google",
           options: {
-            redirectTo: typeof window !== "undefined" ? `${window.location.origin}` : undefined
+            redirectTo:
+              typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined
           }
         });
         return error ? { error: error.message } : {};
