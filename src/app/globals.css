@@ -1,0 +1,100 @@
+@config "../../tailwind.config.ts";
+@import "tailwindcss";
+
+/* Dark-first, premium glassmorphism theme (shadcn-compatible tokens). */
+:root {
+  --radius: 16px;
+}
+
+.dark {
+  --background: 222 18% 7%;
+  --foreground: 210 20% 98%;
+
+  --card: 222 18% 9%;
+  --card-foreground: 210 20% 98%;
+
+  --popover: 222 18% 9%;
+  --popover-foreground: 210 20% 98%;
+
+  --primary: 210 20% 98%;
+  --primary-foreground: 222 18% 7%;
+
+  --secondary: 222 16% 13%;
+  --secondary-foreground: 210 20% 98%;
+
+  --muted: 222 16% 12%;
+  --muted-foreground: 215 12% 65%;
+
+  --accent: 250 72% 65%;
+  --accent-foreground: 210 20% 98%;
+
+  --destructive: 0 72% 55%;
+  --destructive-foreground: 210 20% 98%;
+
+  --border: 222 14% 18%;
+  --input: 222 14% 18%;
+  --ring: 250 72% 65%;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  background: radial-gradient(900px circle at 15% 10%, rgba(167, 139, 250, 0.18), transparent 55%),
+    radial-gradient(800px circle at 85% 20%, rgba(56, 189, 248, 0.14), transparent 55%),
+    radial-gradient(900px circle at 30% 90%, rgba(34, 211, 238, 0.10), transparent 55%),
+    hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+@layer utilities {
+  .glass {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15), 0 18px 60px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(18px);
+  }
+
+  .grid-fade {
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0),
+      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.03) 1px, transparent 0);
+    background-size: 24px 24px, 80px 80px;
+    background-position: 0 0, 0 0;
+  }
+
+  .shimmer {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  /* Desktop-first layout helpers, then degrade down for smaller screens. */
+  .desktop-grid-primary {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.6fr);
+  }
+
+  .desktop-grid-secondary {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  }
+
+  @media (max-width: 1200px) {
+    .desktop-grid-primary,
+    .desktop-grid-secondary {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
