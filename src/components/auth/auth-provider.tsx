@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       return;
     }
+    const sb = supabase;
     const init = async () => {
       // Fallback for OAuth implicit flow where tokens come back in hash.
       // Some environments fail to auto-persist this on first load.
@@ -34,18 +35,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const access_token = params.get("access_token");
         const refresh_token = params.get("refresh_token");
         if (access_token && refresh_token) {
-          await supabase.auth.setSession({ access_token, refresh_token }).catch(() => null);
+          await sb.auth.setSession({ access_token, refresh_token }).catch(() => null);
           // Clean token hash from URL after persisting session.
           window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
         }
       }
 
-      const { data } = await supabase.auth.getSession();
+      const { data } = await sb.auth.getSession();
       setSession(data.session ?? null);
       setLoading(false);
     };
     void init();
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, next) => {
+    const { data: sub } = sb.auth.onAuthStateChange((_event, next) => {
       setSession(next);
     });
     return () => sub.subscription.unsubscribe();
